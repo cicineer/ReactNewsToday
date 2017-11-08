@@ -1,0 +1,31 @@
+.header-margin {
+    margin-top: 5px;
+}
+
+.pcFooterText {
+    text-align: center;
+}
+
+.smallPadding-left {
+    padding-left: 5px
+}
+
+.smallMargin-left {
+    padding-left: 5px
+}
+
+.container{
+    padding-top: 10px;
+}
+.custom-image img {
+    display: block;
+}
+.custom-card {
+    padding: 10px 16px;
+}
+.custom-card p {
+    color: #999;
+}
+.cardHeader {
+
+}

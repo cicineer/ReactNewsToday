@@ -1,0 +1,49 @@
+#mobile {
+    background: #f8f8f8;
+    flex: 1;
+}
+
+.header-login {
+    color: #8f8f8f;
+    float: right;
+    display: inline-block;
+    margin-right: 5px;
+    font-size: 10px;
+}
+
+#mobile header {
+    border-bottom: 1px solid #2db7f5;
+}
+
+#mobile img {
+    height: 40px;
+    padding-left: 10px;
+}
+
+#mobile span {
+    padding-left: 5px;
+    color: #2db7f5;
+    vertical-align: 60%;
+}
+.mobileFooterText {
+    font-size: 12px;
+    text-align: center;
+}
+.vertical-center-modal {
+    text-align: center;
+    white-space: nowrap;
+}
+.vertical-center-modal:before {
+    content: '';
+    display: inline-block;
+    height: 100%;
+    vertical-align: middle;
+    width: 0;
+}
+
+.vertical-center-modal .ant-modal {
+    display: inline-block;
+    vertical-align: middle;
+    top: 0;
+    text-align: left;
+}
