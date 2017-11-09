@@ -21,7 +21,7 @@ function _connectDB(callback) {
 }
 
 exports.settings = function (dbUrl, dbPortNumber, dbName) {
-    if(arguments.length !== 3) {
+    if (arguments.length !== 3) {
         throw 'Arguments number must be 3'
     }
     dbUrlFromSetting = dbUrl
@@ -117,6 +117,14 @@ exports.page = function (collectionName, json, args, callback) {
     })
 }
 
-exports.findAndModify = function (collectionName, json) {
-
+exports.findOneAndUpdate = function (collectionName, json, updateData, callback) {
+    _connectDB(function (err, db) {
+        var collection = db.collection(collectionName)
+        collection.findOneAndUpdate(json, {$push: updateData}, {
+            upsert: true
+        }, function (err, result) {
+            callback(err, result)
+            db.close()
+        })
+    })
 }

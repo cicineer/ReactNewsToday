@@ -1,66 +1,100 @@
 const request = require('request')
 const newsSource = require('../source/newsSource')
 
+const getNews = function (source, res, callback) {
+    request(source, (err, response, body) => {
+        if (body !== undefined && body !== null) {
+            callback(body)
+        }
+        else {
+            callback('-1')
+            res.send({
+                status: -1,
+                msg: 'Seems your network is slow or you are not connected to Internet'
+            })
+        }
+    })
+}
+
 exports.news = {
-    natureAndSociety: function (req, res) {
+    natureAndSociety: function (req, res, db) {
         let news = []
-        request(newsSource.natureAndSociety.cnn, (err, response, body) => {
-            news = (JSON.parse(body)).articles
-            request(newsSource.natureAndSociety.nationalGeographics, (err, response, body) => {
-                (JSON.parse(body)).articles.map((item, key) => {
-                    news.push(item)
+        getNews(newsSource.natureAndSociety.cnn, res, (result) => {
+            if (result !== '-1') {
+                news = (JSON.parse(result)).articles
+                getNews(newsSource.natureAndSociety.nationalGeographics, res, function (result) {
+                    if (result !== '-1') {
+                        (JSON.parse(result)).articles.map((item) => {
+                            news.push(item)
+                        })
+                        console.log(req.session.username)
+                        db.find('news', {
+                            likedUsers: req.session.username,
+                            type: 'natureAndSociety'
+                        }, function (err, result) {
+                            news.map((itemFromInternet) => {
+                                result.map((itemFromDb) => {
+                                    if(itemFromInternet.title === itemFromDb.title)
+                                        itemFromInternet.isLikedByCurrentUser = true
+                                })
+                            })
+                            res.send(news)
+                        })
+                    }
                 })
-                res.send(news)
-            })
+            }
         })
     },
-    technology: function (req, res) {
+    technology: function (req, res, db) {
         let news = []
-        request(newsSource.tech.hackerNews, (err, response, body) => {
-            console.log(body)
-            news = (JSON.parse(body)).articles
-            request(newsSource.tech.techcrunch, (err, response, body) => {
-                (JSON.parse(body)).articles.map((item, key) => {
-                    news.push(item)
+        getNews(newsSource.tech.hackerNews, res, (result) => {
+            if (result !== '-1') {
+                news = (JSON.parse(result)).articles
+                getNews(newsSource.tech.techcrunch, res, (result) => {
+                    if (result !== '-1') {
+                        (JSON.parse(result)).articles.map((item, key) => news.push(item))
+                        getNews(newsSource.tech.techradar, res, (result) => {
+                            if (result !== '-1')
+                                (JSON.parse(result)).articles.map((item, key) => news.push(item))
+                            res.send(news)
+                        })
+                    }
                 })
-                news.push()
-                request(newsSource.tech.techradar, (err, response, body) => {
-                    (JSON.parse(body)).articles.map((item, key) => {
-                        news.push(item)
-                    })
-                    res.send(news)
-                })
-            })
+            }
         })
     },
-    sport: function (req, res) {
+    sport: function (req, res, db) {
         let news = []
-        request(newsSource.sport.bbcSport, (err, response, body) => {
-            news = (JSON.parse(body)).articles
-            console.log(news)
-            request(newsSource.sport.espn, (err, response, body) => {
-                ((JSON.parse(body)).articles).map((item, key) => {
-                    news.push(item)
+        getNews(newsSource.sport.foxSport, res, (result) => {
+            if (result !== '-1') {
+                news = (JSON.parse(result)).articles
+                getNews(newsSource.sport.espn, res, (result) => {
+                    if (result !== '-1') {
+                        (JSON.parse(result)).articles.map((item, key) => news.push(item))
+                        getNews(newsSource.sport.bbcSport, res, (result) => {
+                            if (result !== '-1')
+                                (JSON.parse(result)).articles.map((item, key) => news.push(item))
+                            res.send(news)
+                        })
+                    }
                 })
-                request(newsSource.sport.foxSport, (err, response, body) => {
-                    ((JSON.parse(body)).articles).map((item, key) => {
-                        news.push(item)
-                    })
-                    res.send(news)
-                })
-            })
+            }
         })
     },
-    entertainment: function(req, res) {
+    entertainment: function (req, res, db) {
         let news = []
-        request(newsSource.entertainment.entertainmentDaily, (err, response, body) => {
-            news = (JSON.parse(body)).articles
-            request(newsSource.entertainment.reddit, (err, response, body) => {
-                ((JSON.parse(body)).articles).map((item, key) => {
-                    news.push(item)
+        getNews(newsSource.entertainment.reddit, res, (result) => {
+            if (result !== '-1') {
+                news = (JSON.parse(result)).articles
+                getNews(newsSource.entertainment.entertainmentDaily, res, function (result) {
+                    if (result !== '-1') {
+                        (JSON.parse(result)).articles.map((item) => {
+                            news.push(item)
+                        })
+                        res.send(news)
+                    }
                 })
-                res.send(news)
-            })
+            }
         })
     }
 }

@@ -33,11 +33,10 @@ app.use(cors({credentials: true, origin: true}))
 app.use(bodyParser.json())
 
 app.get('/', function (req, res, next) {
-    console.log(req.session)
     res.send(req.session.login)
 })
 
-// app.post('/user/like', (req, res) => userRoutes.like(req, res, db))
+app.post('/user/likeNews', (req, res) => userRoutes.like(req, res, db))
 
 app.post('/register', (req, res) => {userRoutes.register(req, res, db, md5)})
 
@@ -45,13 +44,13 @@ app.post('/login', (req, res) => userRoutes.login(req, res, db, md5))
 
 app.post('/logout', (req, res) => userRoutes.logout(req, res, mongoStoreInstance))
 
-app.get('/news/natureAndSociety', (req, res) => newsRoutes.news.natureAndSociety(req, res))
+app.get('/news/natureAndSociety', (req, res) => newsRoutes.news.natureAndSociety(req, res, db))
 
-app.get('/news/technology', (req, res) => newsRoutes.news.technology(req, res))
+app.get('/news/technology', (req, res) => newsRoutes.news.technology(req, res, db))
 
-app.get('/news/sport', (req, res) => newsRoutes.news.sport(req, res))
+app.get('/news/sport', (req, res) => newsRoutes.news.sport(req, res, db))
 
-app.get('/news/entertainment', (req, res) => newsRoutes.news.entertainment(req, res))
+app.get('/news/entertainment', (req, res) => newsRoutes.news.entertainment(req, res, db))
 
 app.listen('3000', function () {
     db.settings('127.0.0.1', '27017', 'ReactNews')

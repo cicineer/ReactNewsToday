@@ -5,7 +5,7 @@ import PCFooter from './pc_footer'
 export default class PCIndex extends React.Component{
     render() {
         return (
-            <div>
+            <div class="pcIndex">
                 <PCHeader/>
                 <PCFooter/>
             </div>

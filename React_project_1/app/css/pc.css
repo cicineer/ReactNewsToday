@@ -1,3 +1,38 @@
+/*强制使用滚动条*/
+@media screen and (max-width: 1920px) {
+    .pcIndex {
+        min-width: 1900px;
+        overflow: scroll;
+    }
+    .cardGrid{
+        width: 25%;
+        height: 400px
+    }
+}
+/*强制使用滚动条*/
+/*使用mediaquery让屏幕自适应*/
+@media screen and (max-width: 1920px) and (min-width: 1600px) {
+    .pcIndex {
+        min-width: 1500px;
+        overflow: scroll;
+    }
+    .cardGrid{
+        width: 25%;
+        height: 500px
+    }
+}
+/*强制使用滚动条*/
+@media screen and (max-width: 1600px) {
+    .pcIndex {
+        min-width: 1340px;
+        overflow: scroll;
+    }
+    .cardGrid{
+        width: 25%;
+        height: 600px
+    }
+}
+
 .header-margin {
     margin-top: 5px;
 }

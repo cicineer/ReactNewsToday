@@ -8,39 +8,84 @@ export default class PCNewsBlock extends React.Component {
     constructor() {
         super()
         this.state = {
-            news: []
+            news: [],
+            stateText: 'Please wait while we are working'
         }
     }
 
     componentWillMount() {
         const self = this
         const newsType = this.props.newsType
-        console.log('PCNewsblock ' + newsType)
         axios.get('http://127.0.0.1:3000/news/' + newsType, {
             withCredentials: true
         })
             .then(function (response) {
-                const news = response.data
-                console.log(response.data)
-                self.setState({
-                    news: news
-                })
+                if (response.data.status === -1) {
+                    // react set timeout 要把它绑在this上面
+                    setTimeout(function () {
+                        {
+                            self.setState({
+                                stateText: response.data.msg
+                            })
+                        }
+                    }.bind(self), 3000)
+                } else {
+                    const news = response.data
+                    console.log(news)
+                    self.setState({
+                        news: news
+                    })
+                }
             })
             .catch(function (err) {
                 console.log(err)
             })
     }
 
-    handleHeartClick(title) {
+    handleHeartClick(newsItem, newsType) {
+        var self = this
         axios.get('http://127.0.0.1:3000', {
             withCredentials: true
         })
             .then(function (response) {
-                if(response.data !== 1) {
+                if (response.data !== 1) {
                     notification.open({
-                        message:'Please login',
-                        icon: <Icon type="close-circle" />
+                        message: 'Please login',
+                        icon: <Icon type="close-circle"/>
                     })
+                } else {
+                    // 如果是用户喜欢的话，点击这个Icon就取消喜欢
+                    if (newsItem.isLikedByCurrentUser === true) {
+                        console.log(123)
+                    } else {
+                        axios.post('http://127.0.0.1:3000/user/likeNews', {
+                            withCredentials: true,
+                            data: {
+                                newsItem: newsItem,
+                                newsType: newsType
+                            }
+                        })
+                            .then(function (response) {
+                                const currentNews = self.state.news
+                                const changedItem = response.data.addedObj[0]
+                                console.log(changedItem)
+                                for (let i=0; i< currentNews; i++){
+                                    if(currentNews[i].title === changedItem.title) {
+                                        currentNews[i] = changedItem
+                                        console.log(currentNews[i])
+                                        break
+                                    }
+                                }
+                                console.log(currentNews)
+                                self.setState({
+                                    news: currentNews
+                                })
+                                console.log(self.state.news)
+                            })
+                            .catch(function (err) {
+                                console.log(err)
+                            })
+                    }
                 }
             })
             .catch(function (err) {
@@ -52,7 +97,7 @@ export default class PCNewsBlock extends React.Component {
         const news = this.state.news
         const newsList = news.length ?
             news.map((newsItem, index) => (
-                    <Card.Grid style={{width: '25%', height: 500}} key={index}>
+                    <Card.Grid class='cardGrid' key={index}>
                         <div className="custom-image">
                             <img alt="example" width="100%" height='200px' src={newsItem.urlToImage}/>
                         </div>
@@ -66,14 +111,20 @@ export default class PCNewsBlock extends React.Component {
                             }</p>
                             <a href={newsItem.url} target='_blank'>more information</a>
                             <div>
-                                <Icon type="heart" style={{cursor: 'pointer'}}
-                                      onClick={this.handleHeartClick.bind(this, newsItem.title)}/>
+                                {
+                                    newsItem.isLikedByCurrentUser ?
+                                        <Icon type="heart" style={{cursor: 'pointer', color: 'darkRed'}}
+                                              onClick={this.handleHeartClick.bind(this, newsItem, this.props.newsType)}/>
+                                        :
+                                        <Icon type="heart" style={{cursor: 'pointer'}}
+                                              onClick={this.handleHeartClick.bind(this, newsItem, this.props.newsType)}/>
+                                }
                             </div>
                         </div>
                     </Card.Grid>
                 )
             ) :
-            <div>Please wait while we are working</div>
+            <div>{this.state.stateText}</div>
 
         return (
             <div>
