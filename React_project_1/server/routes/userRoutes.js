@@ -8,7 +8,7 @@ module.exports = {
                 const passwordFromDb = user.password
                 if (md5(password) === passwordFromDb) {
                     req.session.login = '1'
-                    console.log(req.session)
+                    req.session.username = username
                     res.send({status: 1, msg: 'Welcome ' + username})
                 } else if (md5(password) !== passwordFromDb) {
                     res.send({status: -1, msg: 'password not correct'})
@@ -19,24 +19,21 @@ module.exports = {
         })
     },
     register: (req, res, db, md5) => {
-        console.log(req.body)
         const username = req.body.formData.userName
         const password = md5(req.body.formData.password)
         db.find('user_table', {username: username}, function (err, result) {
             if (result.length !== 0) {
-                console.log(username + ' has already existed')
                 res.send({status: -1, msg: username + ' has already existed'})
                 res.end()
                 return
             }
             db.insertOne('user_table', {username: username, password: password}, function (err, result) {
                 if (err) {
-                    console.log(123)
-                    console.log(err)
                     res.send(err)
                     return
                 }
                 req.session.login = '1'
+                req.session.username = username
                 res.send({status: 1, msg: 'Welcome ' + username})
             })
         })
@@ -47,11 +44,62 @@ module.exports = {
             res.send('1')
         })
     },
-    // like: (req, res, db) => {
-    //     if (req.session.login !== '1')
-    //         res.send({status: -1, msg: 'You are not logged in'})
-    //     else {
-    //         db.
-    //     }
-    // }
+    // three values will be returned
+    // 1. insert the first record in the database
+    // 2. the news has been liked, you are pushed into the news liked user collection
+    // 3. You are the first one to like this piece of news
+    like: (req, res, db) => {
+        if (req.session.login !== '1')
+            res.send({status: -1, msg: 'You are not logged in'})
+        else {
+            const newsItem = req.body.data.newsItem
+            const newsType = req.body.data.newsType
+            // 如果like这个新闻，那么就要判断这个新闻在所对应的类别是不是已经在数据库中
+            // 如果没有在就添加进去
+            // 如果在就推进对应的类别中去
+            db.findAll('news', (error, result) => {
+                if (result.length === 0) {
+                    newsItem.likedUsers = [req.session.username]
+                    newsItem.type = newsType
+                    db.insertOne('news', newsItem, (err, result) => {
+                        res.send({
+                            status: 1,
+                            msg: 'insert the first record in the database'
+                        })
+                    })
+                } else {
+                    // 判断集合中有没有这条新闻
+                    let exist = false
+                    for (let i = 0; i < result.length; i++) {
+                        if (result[i].title === newsItem.title) {
+                            // db.insert
+                            exist = true
+                            break
+                        }
+                    }
+                    // 如果集合中有这条新闻记录了，那么就将当前用户push到这条新闻的likedUser里去
+                    if (exist) {
+                        db.findOneAndUpdate('news', {title: newsItem.title}, {likedUsers: req.session.username}, function (err, result) {
+                            res.send({
+                                status: 2,
+                                msg: 'the news has been liked, you are pushed into the news liked user collection'
+                            })
+                        })
+                        // 没有这条新闻那么就在news这个集合中加入这个news并且把当前点赞的user推进likedUsers这个数组中
+                    } else {
+                        newsItem.likedUsers = [req.session.username]
+                        newsItem.type = newsType
+                        db.insertOne('news', newsItem, (err, result) => {
+                            console.log(result.ops)
+                            res.send({
+                                status: 3,
+                                addedObj: result.ops,
+                                msg: 'You are the first one to like this piece of news'
+                            })
+                        })
+                    }
+                }
+            })
+        }
+    }
 }
