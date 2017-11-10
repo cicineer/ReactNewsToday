@@ -36,6 +36,8 @@ app.get('/', function (req, res, next) {
     res.send(req.session.login)
 })
 
+app.post('/user/dislikeNews', (req, res) => userRoutes.dislike(req, res, db))
+
 app.post('/user/likeNews', (req, res) => userRoutes.like(req, res, db))
 
 app.post('/register', (req, res) => {userRoutes.register(req, res, db, md5)})

@@ -79,10 +79,13 @@ module.exports = {
                     }
                     // 如果集合中有这条新闻记录了，那么就将当前用户push到这条新闻的likedUser里去
                     if (exist) {
-                        db.findOneAndUpdate('news', {title: newsItem.title}, {likedUsers: req.session.username}, function (err, result) {
-                            res.send({
-                                status: 2,
-                                msg: 'the news has been liked, you are pushed into the news liked user collection'
+                        db.findOneAndPush('news', {title: newsItem.title}, {likedUsers: req.session.username}, function (err, result) {
+                            db.find('news', {title: newsItem.title}, (err, result) => {
+                                res.send({
+                                    status: 2,
+                                    addedObj: result,
+                                    msg: 'the news has been liked, you are pushed into the news liked user collection'
+                                })
                             })
                         })
                         // 没有这条新闻那么就在news这个集合中加入这个news并且把当前点赞的user推进likedUsers这个数组中
@@ -90,7 +93,6 @@ module.exports = {
                         newsItem.likedUsers = [req.session.username]
                         newsItem.type = newsType
                         db.insertOne('news', newsItem, (err, result) => {
-                            console.log(result.ops)
                             res.send({
                                 status: 3,
                                 addedObj: result.ops,
@@ -101,5 +103,27 @@ module.exports = {
                 }
             })
         }
+    },
+    // dislike the news the user liked before
+    dislike: (req, res, db) => {
+        const newsType = req.body.data.newsType
+        const newsItem = req.body.data.newsItem
+        if(req.session.login !== '1')
+            res.send({status: -1, msg: 'You are not logged in'})
+        else {
+            db.findOneAndUpdate('news', {type: newsType, title: newsItem.title}, {likedUsers: req.session.username}, (err, result) => {
+                if (!err) {
+                    db.find('news',  {type: newsType, title: newsItem.title}, (err, result) => {
+                        res.send({
+                            status: 1,
+                            msg: 'You unliked the news',
+                            result: result[0]
+                        })
+                    })
+                } else
+                    console.log(err)
+            })
+        }
+
     }
 }

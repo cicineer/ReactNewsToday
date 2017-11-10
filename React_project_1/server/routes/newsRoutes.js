@@ -27,7 +27,6 @@ exports.news = {
                         (JSON.parse(result)).articles.map((item) => {
                             news.push(item)
                         })
-                        console.log(req.session.username)
                         db.find('news', {
                             likedUsers: req.session.username,
                             type: 'natureAndSociety'

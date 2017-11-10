@@ -1,12 +1,12 @@
-var MongoClient = require('mongodb').MongoClient
+const MongoClient = require('mongodb').MongoClient
 
-var dbUrlFromSetting = ''
-var dbPortNumberFromSetting = ''
-var dbNameFromSetting = '   '
+let dbUrlFromSetting = ''
+let dbPortNumberFromSetting = ''
+let dbNameFromSetting = '   '
 
 function _connectDB(callback) {
     // default url
-    var url = ''
+    let url = ''
     if (dbUrlFromSetting === '' || dbPortNumberFromSetting === '' || dbNameFromSetting === '') {
         url = 'mongoDb://127.0.0.1:27017/student'
     } else {
@@ -39,11 +39,7 @@ exports.getAllRecordCount = function (collectionName, callback) {
 
 exports.getRecordCount = function (collectionName, json, callback) {
     _connectDB(function (err, db) {
-        console.log(dbUrlFromSetting)
-        console.log(dbPortNumberFromSetting)
-        console.log(dbNameFromSetting)
         db.collection(collectionName).find(json).count().then(function (count) {
-            console.log(count)
             callback(err, count)
         })
     })
@@ -59,9 +55,9 @@ exports.insertOne = function (collectionName, json, callback) {
 }
 
 exports.findAll = function (collectionName, callback) {
-    var result = [];
+    const result = [];
     _connectDB(function (err, db) {
-        var cursor = db.collection(collectionName).find({})
+        const cursor = db.collection(collectionName).find({})
         // the first parameter is the iterator
         // the second is to handle when finishing the iteration
         cursor.forEach(function (doc) {
@@ -75,11 +71,11 @@ exports.findAll = function (collectionName, callback) {
 
 exports.find = function (collectionName, json, callback) {
     // the result of all docs
-    var result = [];
+    const result = [];
     if (JSON.stringify(json) === '{}')
         throw 'Query cannot be empty'
     _connectDB(function (err, db) {
-        var cursor = db.collection(collectionName).find(json)
+        const cursor = db.collection(collectionName).find(json)
         // the first parameter is the iterator
         // the second is to handle when finishing the iteration
         cursor.forEach(function (doc) {
@@ -93,21 +89,21 @@ exports.find = function (collectionName, json, callback) {
 
 exports.page = function (collectionName, json, args, callback) {
 
-    var result = [];
+    const result = [];
 
     // the number of Records to be ignored
     // pageAmount: items the user wanna get per page
     // page: which page the user wanna get
     // currentPage: the real page user wanna get because skipAmount will skip items that he wanna see on this page
     // skipAmount: items skipped, also it is which page the user wanna see
-    var currentPage = args.page - 1;
-    var skipAmount = args.pageAmount * (args.page - 1)
+    const currentPage = args.page - 1;
+    const skipAmount = args.pageAmount * (args.page - 1)
 
     _connectDB(function (err, db) {
         // .limit() items per page
-        var cursor = db.collection(collectionName).find(json).limit(args.pageAmount).skip(skipAmount)
+        const cursor = db.collection(collectionName).find(json).limit(args.pageAmount).skip(skipAmount)
 
-        // var totalNumber = db.collection(collectionName).find(json).count()
+        // const totalNumber = db.collection(collectionName).find(json).count()
         cursor.forEach(function (doc) {
             result.push(doc)
         }, function () {
@@ -117,12 +113,22 @@ exports.page = function (collectionName, json, args, callback) {
     })
 }
 
-exports.findOneAndUpdate = function (collectionName, json, updateData, callback) {
+exports.findOneAndPush = function (collectionName, json, pushData, callback) {
     _connectDB(function (err, db) {
-        var collection = db.collection(collectionName)
-        collection.findOneAndUpdate(json, {$push: updateData}, {
+        const collection = db.collection(collectionName)
+        collection.findOneAndUpdate(json, {$push: pushData}, {
             upsert: true
         }, function (err, result) {
+            callback(err, result)
+            db.close()
+        })
+    })
+}
+
+exports.findOneAndUpdate = function (collectionName, json, updateData, callback) {
+    _connectDB(function (err, db) {
+        const collection = db.collection(collectionName)
+        collection.findOneAndUpdate(json, {$pull: updateData}, {}, function (err, result) {
             callback(err, result)
             db.close()
         })
