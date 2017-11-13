@@ -11,17 +11,16 @@ class PCHeaderLogin extends React.Component {
 
     handleLogin(e) {
         e.preventDefault()
-        var self = this
+        const self = this
         this.props.form.validateFields((err, values) => {
             if (!err) {
-                console.log(values)
                 axios.post('http://127.0.0.1:3000/login', {
                     formData: values,
                     withCredentials: true
                 })
                     .then(function (response) {
                         if (response.data.status === 1) {
-                            self.props.handleLoginModal(false, response.data.status, response.data.msg)
+                            self.props.handleLoginModal(false, response.data.status, response.data.msg, response.data.newsFromDb, response.data.username)
                         } else {
                             self.props.handleLoginModal(true, response.data.status, response.data.msg)
                         }
@@ -36,7 +35,7 @@ class PCHeaderLogin extends React.Component {
     render() {
         const {getFieldDecorator} = this.props.form
         return (
-            <Form onSubmit={this.handleLogin.bind(this)} class='loginForm'>
+            <Form class='loginForm'>
 
                 <FormItem label='Account'>
 
@@ -58,7 +57,7 @@ class PCHeaderLogin extends React.Component {
                     )}
 
                 </FormItem>
-                <Button type='primary' htmlType='submit' className='login-form-button'>Sign
+                <Button type='primary' onClick={this.handleLogin.bind(this)} htmlType='submit' className='login-form-button'>Sign
                     In</Button>
             </Form>
 

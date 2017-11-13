@@ -32,9 +32,7 @@ app.use(cors({credentials: true, origin: true}))
 
 app.use(bodyParser.json())
 
-app.get('/', function (req, res, next) {
-    res.send(req.session.login)
-})
+app.get('/', (req, res) => res.send({isLogin: req.session.login, username: req.session.username}))
 
 app.post('/user/dislikeNews', (req, res) => userRoutes.dislike(req, res, db))
 

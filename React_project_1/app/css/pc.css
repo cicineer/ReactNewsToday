@@ -37,6 +37,10 @@
     margin-top: 5px;
 }
 
+.header-margin h1 {
+    color: #2db7f5;
+}
+
 .pcFooterText {
     text-align: center;
 }

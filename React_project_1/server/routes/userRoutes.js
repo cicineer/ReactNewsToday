@@ -9,7 +9,16 @@ module.exports = {
                 if (md5(password) === passwordFromDb) {
                     req.session.login = '1'
                     req.session.username = username
-                    res.send({status: 1, msg: 'Welcome ' + username})
+                    // 登陆之后要根据用户当前所在的type新闻页将数据库
+                    // 中相对应的新闻推过去，这样可以更新用户喜欢的新闻，把桃心点红
+                    db.findAll('news', (err, result) => {
+                        res.send({
+                            status: 1,
+                            msg: 'Welcome ' + username,
+                            newsFromDb: result,
+                            username: req.session.username
+                        })
+                    })
                 } else if (md5(password) !== passwordFromDb) {
                     res.send({status: -1, msg: 'password not correct'})
                 }

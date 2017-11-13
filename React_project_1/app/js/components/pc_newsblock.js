@@ -13,9 +13,39 @@ export default class PCNewsBlock extends React.Component {
         }
     }
 
+    handleLogoutAction () {
+        let currentNews = this.state.news
+        currentNews.map((item) => {
+            if(item.isLikedByCurrentUser === true) {
+                delete item.isLikedByCurrentUser
+            }
+        })
+        this.setState({news: currentNews})
+    }
+
+    componentWillReceiveProps(nextProps) {
+        // 登陆之后自动显示用户已经点过赞的新闻
+        if (nextProps.newsFromDbAfterLogin.length !== 0) {
+            let currentNews = this.state.news
+            const newsFromDb = nextProps.newsFromDbAfterLogin
+            currentNews.map((item1) => {
+                newsFromDb.map((item2) => {
+                    if (item1.title === item2.title) {
+                        item1.isLikedByCurrentUser = true
+                    }
+                })
+            })
+            this.setState({
+                news: currentNews
+            })
+        }
+    }
+
     componentWillMount() {
         const self = this
         const newsType = this.props.newsType
+
+        // const news = this.props.news || []
         axios.get('http://127.0.0.1:3000/news/' + newsType, {
             withCredentials: true
         })
@@ -47,7 +77,7 @@ export default class PCNewsBlock extends React.Component {
             withCredentials: true
         })
             .then(function (response) {
-                if (response.data !== 1) {
+                if (response.data.isLogin !== '1') {
                     // 如果当前用户没有login，那么弹出提示框提示用户登陆
                     notification.open({
                         message: 'Please login',
@@ -56,7 +86,7 @@ export default class PCNewsBlock extends React.Component {
                 } else {
                     // 如果是当前新闻用户喜欢的话，点击这个Icon就取消喜欢
                     if (newsItem.isLikedByCurrentUser === true) {
-                        axios.post('http://127.0.0.1:3000/user/dislikeNews',{
+                        axios.post('http://127.0.0.1:3000/user/dislikeNews', {
                             data: {
                                 newsItem: newsItem,
                                 newsType: newsType
@@ -69,6 +99,11 @@ export default class PCNewsBlock extends React.Component {
                                 if (news[i].title === updatedData.title) {
                                     news[i] = updatedData
                                     delete news[i].isLikedByCurrentUser
+                                    notification.open({
+                                        message: 'You disliked: ' + news[i].title,
+                                        icon: <Icon type="frown-o"/>
+                                    })
+                                    break
                                 }
                             }
                             self.setState({news: news})
@@ -94,6 +129,10 @@ export default class PCNewsBlock extends React.Component {
                                         // react re-rendering
                                         changedItem.isLikedByCurrentUser = true
                                         currentNews[i] = changedItem
+                                        notification.open({
+                                            message: 'You liked: ' + currentNews[i].title,
+                                            icon: <Icon type="smile-o"/>
+                                        })
                                         break
                                     }
                                 }

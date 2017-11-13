@@ -5,10 +5,9 @@ import {Link} from 'react-router-dom'
 import PCHeaderRegister from './pc_form/pc_header_register'
 import PCHeaderLogin from './pc_form/pc_header_login'
 import axios from 'axios'
-import PCNewsContainer from "./pc_newscontainer";
+import PCNewsBlock from "./pc_newsblock";
 
 axios.defaults.withCredentials = true
-const FormItem = Form.Item
 const TabPane = Tabs.TabPane
 
 class PCHeader extends React.Component {
@@ -16,12 +15,16 @@ class PCHeader extends React.Component {
     constructor() {
         super()
         this.state = {
+            // the current tab of the news
             current: 'natureAndSociety',
             modalVisible: false,
-            action: 'login',
+            // the news is got after the user has logged in
+            // otherwise the news will be empty
+            newsFromDbAfterLogin: [],
             hasLoggedIn: false,
-            userNickName: '',
+            currentUsername: '',
             userId: 0,
+            news: []
         }
         this.handleLoginModal = this.handleLoginModal.bind(this)
     }
@@ -32,8 +35,9 @@ class PCHeader extends React.Component {
             withCredentials: true
         })
             .then(function (response) {
-                if (response.data === 1) {
+                if (response.data.isLogin === '1') {
                     self.setState({
+                        currentUsername: response.data.username,
                         hasLoggedIn: true
                     })
                 }
@@ -43,11 +47,13 @@ class PCHeader extends React.Component {
             })
     }
 
-    handleLoginModal(isClose, status, message) {
-        if(status === 1){
+    handleLoginModal(isClose, status, message, newsFromDb, username) {
+        if (status === 1) {
             this.setState({
                 modalVisible: isClose,
-                hasLoggedIn: true
+                hasLoggedIn: true,
+                newsFromDbAfterLogin: newsFromDb,
+                currentUsername: username
             })
         }
         if (status === -1) {
@@ -77,13 +83,13 @@ class PCHeader extends React.Component {
             withCredentials: true
         })
             .then(function (response) {
-                console.log(response)
                 if (response.data === 1) {
-                    console.log(self.state.hasLoggedIn)
                     self.setState({
-                        hasLoggedIn: false
+                        hasLoggedIn: false,
+                        // because you're logged out, so clear the news got after login
+                        newsFromDbAfterLogin: []
                     })
-                    console.log(self.state.hasLoggedIn)
+                    self.refs.PcNewsBlock.handleLogoutAction()
                 }
             })
             .catch(function (err) {
@@ -100,6 +106,7 @@ class PCHeader extends React.Component {
     render() {
         const userShow = this.state.hasLoggedIn ?
             <div>
+                <span style={{'marginRight': '5px', 'color': '#2db7f5'}}>{this.state.currentUsername}</span>
                 <Button type='dashed' htmlType='button'>User Profile</Button>
                 &nbsp;&nbsp;
                 <Button type='ghost' htmlType='button' onClick={this.handleLogoutButton.bind(this)}>Logout</Button>
@@ -111,17 +118,12 @@ class PCHeader extends React.Component {
             <div>
                 <header className='header-margin'>
                     <Row>
-                        <Col span={2}></Col>
-                        <Col span={4}>
-                            <a href='/'>
-                                <span>NewsToday</span>
-                            </a>
-
-                            {userShow}
+                        <Col span={4} offset={2}>
+                            <h1>NewsToday</h1>
                         </Col>
-                        <Col span={16}>
+                        <Col offset={12} span={5}>
+                            <div style={{'marginTop': '35px'}}>{userShow}</div>
                         </Col>
-                        <Col span={2}></Col>
                         <Modal
                             title="User center"
                             visible={this.state.modalVisible}
@@ -144,16 +146,28 @@ class PCHeader extends React.Component {
                     <Col span={20} offset={2}>
                         <Tabs defaultActiveKey="natureAndSociety" onChange={this.callback.bind(this)}>
                             <TabPane tab="Society" key="natureAndSociety">
-                                <PCNewsContainer newsType={this.state.current}/>
+                                <PCNewsBlock newsType={this.state.current}
+                                                 newsFromDbAfterLogin={this.state.newsFromDbAfterLogin}
+                                                 handleLogout={this.handleLogoutButton}
+                                                ref='PcNewsBlock'/>
                             </TabPane>
                             <TabPane tab="Technology" key="technology">
-                                <PCNewsContainer newsType={this.state.current}/>
+                                <PCNewsBlock newsType={this.state.current}
+                                                 newsFromDbAfterLogin={this.state.newsFromDbAfterLogin}
+                                                 handleLogout={this.handleLogoutButton}
+                                             ref='PcNewsBlock'/>
                             </TabPane>
                             <TabPane tab="Sport" key="sport">
-                                <PCNewsContainer newsType={this.state.current}/>
+                                <PCNewsBlock newsType={this.state.current}
+                                                 newsFromDbAfterLogin={this.state.newsFromDbAfterLogin}
+                                                 handleLogout={this.handleLogoutButton}
+                                             ref='PcNewsBlock'/>
                             </TabPane>
                             <TabPane tab="Entertainment" key="entertainment">
-                                <PCNewsContainer newsType={this.state.current}/>
+                                <PCNewsBlock newsType={this.state.current}
+                                                 newsFromDbAfterLogin={this.state.newsFromDbAfterLogin}
+                                                 handleLogout={this.handleLogoutButton}
+                                             ref='PcNewsBlock'/>
                             </TabPane>
                         </Tabs>
                     </Col>
