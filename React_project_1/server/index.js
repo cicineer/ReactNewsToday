@@ -32,9 +32,9 @@ app.use(cors({credentials: true, origin: true}))
 
 app.use(bodyParser.json())
 
-app.get('/', function (req, res, next) {
-    res.send(req.session.login)
-})
+app.get('/', (req, res) => res.send({isLogin: req.session.login, username: req.session.username}))
+
+app.post('/user/dislikeNews', (req, res) => userRoutes.dislike(req, res, db))
 
 app.post('/user/likeNews', (req, res) => userRoutes.like(req, res, db))
 
@@ -43,6 +43,8 @@ app.post('/register', (req, res) => {userRoutes.register(req, res, db, md5)})
 app.post('/login', (req, res) => userRoutes.login(req, res, db, md5))
 
 app.post('/logout', (req, res) => userRoutes.logout(req, res, mongoStoreInstance))
+
+app.get('/news/getNewsFromDb/:newsType', (req, res) => newsRoutes.news.getNewsInDbRegardingType(req, res, db))
 
 app.get('/news/natureAndSociety', (req, res) => newsRoutes.news.natureAndSociety(req, res, db))
 

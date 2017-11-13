@@ -16,6 +16,8 @@ export default class PCNewsBlock extends React.Component {
     componentWillMount() {
         const self = this
         const newsType = this.props.newsType
+
+        // const news = this.props.news || []
         axios.get('http://127.0.0.1:3000/news/' + newsType, {
             withCredentials: true
         })
@@ -31,10 +33,105 @@ export default class PCNewsBlock extends React.Component {
                     }.bind(self), 3000)
                 } else {
                     const news = response.data
-                    console.log(news)
-                    self.setState({
-                        news: news
+                    axios.get('http://127.0.0.1:3000/news/getNewsFromDb/' + newsType, {
+                        withCredentials: true,
+                    }).then(function (response) {
+                        const newsFromDb = response.data
+                        news.map((item1) => {
+                            newsFromDb.map((item2) => {
+                                if (item1.title === item2.title)
+                                    item1.isLikedByCurrentUser = true
+                            })
+                        })
+                        self.setState({
+                            news: news
+                        })
                     })
+                        .catch(function (err) {
+                            console.log(err)
+                        })
+                }
+            })
+            .catch(function (err) {
+                console.log(err)
+            })
+    }
+
+    handleLogoutAction() {
+        let currentNews = this.state.news
+        currentNews.map((item) => {
+            if (item.isLikedByCurrentUser === true) {
+                delete item.isLikedByCurrentUser
+            }
+        })
+        this.setState({news: currentNews})
+    }
+
+    componentWillReceiveProps(nextProps) {
+        // 登陆之后自动显示用户已经点过赞的新闻
+        if (nextProps.newsFromDbAfterLogin.length !== 0) {
+            let currentNews = this.state.news
+            const newsFromDb = nextProps.newsFromDbAfterLogin
+            currentNews.map((item1) => {
+                newsFromDb.map((item2) => {
+                    if (item1.title === item2.title) {
+                        item1.isLikedByCurrentUser = true
+                    }
+                })
+            })
+            this.setState({
+                news: currentNews
+            })
+        }
+    }
+
+    getRefreshedNews(newsType) {
+        const self = this
+        axios.get('http://127.0.0.1:3000/news/' + newsType, {
+            withCredentials: true
+        })
+            .then(function (response) {
+                if (response.data.status === -1) {
+                    // react set timeout 要把它绑在this上面
+                    setTimeout(function () {
+                        {
+                            self.setState({
+                                stateText: response.data.msg
+                            })
+                        }
+                    }.bind(self), 3000)
+                } else {
+                    const news = response.data
+                    const currentNews = self.state.news
+                    // If the current news' length is not equal to the upcoming news, the news must be changed
+                    if (news.length !== currentNews.length) {
+                        self.setState({
+                            news: news
+                        }, function () {
+                            console.log('news is updated')
+                        })
+                        notification.success({message: 'News is updated'})
+                    }
+                    // If the length is the same, then has to for loop both collections, if there is any one news which
+                    // is not the same as the current one, then Performing update
+                    else {
+                        for (let i = 0; i < news.length; i++) {
+                            for (let j = 0; j < currentNews.length; j++) {
+                                if (news[i].title !== currentNews[j].title) {
+                                    self.setState({
+                                        news: news
+                                    }, function () {
+                                        console.log('news is updated')
+                                    })
+                                    notification.success({message: 'News is updated'})
+                                } else {
+                                    notification.info({message: 'No fresh news'})
+                                }
+                                break
+                            }
+                            break
+                        }
+                    }
                 }
             })
             .catch(function (err) {
@@ -43,21 +140,46 @@ export default class PCNewsBlock extends React.Component {
     }
 
     handleHeartClick(newsItem, newsType) {
-        var self = this
+        const self = this
         axios.get('http://127.0.0.1:3000', {
             withCredentials: true
         })
             .then(function (response) {
-                if (response.data !== 1) {
+                if (response.data.isLogin !== '1') {
+                    // 如果当前用户没有login，那么弹出提示框提示用户登陆
                     notification.open({
                         message: 'Please login',
                         icon: <Icon type="close-circle"/>
                     })
                 } else {
-                    // 如果是用户喜欢的话，点击这个Icon就取消喜欢
+                    // 如果是当前新闻用户喜欢的话，点击这个Icon就取消喜欢
                     if (newsItem.isLikedByCurrentUser === true) {
-                        console.log(123)
+                        axios.post('http://127.0.0.1:3000/user/dislikeNews', {
+                            data: {
+                                newsItem: newsItem,
+                                newsType: newsType
+                            },
+                            withCredentials: true
+                        }).then((response) => {
+                            const news = self.state.news
+                            const updatedData = response.data.result
+                            for (let i = 0; i < news.length; i++) {
+                                if (news[i].title === updatedData.title) {
+                                    news[i] = updatedData
+                                    delete news[i].isLikedByCurrentUser
+                                    notification.open({
+                                        message: 'You disliked: ' + news[i].title,
+                                        icon: <Icon type="frown-o"/>
+                                    })
+                                    break
+                                }
+                            }
+                            self.setState({news: news})
+                        }).catch((err) => {
+
+                        })
                     } else {
+                        // 如果当前用户没有喜欢这条新闻，那么点击表示喜欢
                         axios.post('http://127.0.0.1:3000/user/likeNews', {
                             withCredentials: true,
                             data: {
@@ -68,19 +190,23 @@ export default class PCNewsBlock extends React.Component {
                             .then(function (response) {
                                 const currentNews = self.state.news
                                 const changedItem = response.data.addedObj[0]
-                                console.log(changedItem)
-                                for (let i=0; i< currentNews; i++){
-                                    if(currentNews[i].title === changedItem.title) {
+                                for (let i = 0; i < currentNews.length; i++) {
+                                    if (currentNews[i].title === changedItem.title) {
+                                        // set this item liked by the current user!!
+                                        // important and this will make the heart goes red when
+                                        // react re-rendering
+                                        changedItem.isLikedByCurrentUser = true
                                         currentNews[i] = changedItem
-                                        console.log(currentNews[i])
+                                        notification.open({
+                                            message: 'You liked: ' + currentNews[i].title,
+                                            icon: <Icon type="smile-o"/>
+                                        })
                                         break
                                     }
                                 }
-                                console.log(currentNews)
                                 self.setState({
                                     news: currentNews
                                 })
-                                console.log(self.state.news)
                             })
                             .catch(function (err) {
                                 console.log(err)
@@ -96,33 +222,35 @@ export default class PCNewsBlock extends React.Component {
     render() {
         const news = this.state.news
         const newsList = news.length ?
-            news.map((newsItem, index) => (
-                    <Card.Grid class='cardGrid' key={index}>
-                        <div className="custom-image">
-                            <img alt="example" width="100%" height='200px' src={newsItem.urlToImage}/>
-                        </div>
-                        <div className="custom-card">
-                            <h4>{newsItem.title}</h4>
-                            <p style={{fontSize: '12px'}}>{newsItem.description}</p>
-                            <p style={{fontSize: '12px', color: 'black'}}>{
-                                new Date(newsItem.publishedAt).getFullYear() + '-' +
-                                (new Date(newsItem.publishedAt).getMonth() + 1) + '-' +
-                                new Date(newsItem.publishedAt).getDate()
-                            }</p>
-                            <a href={newsItem.url} target='_blank'>more information</a>
-                            <div>
-                                {
-                                    newsItem.isLikedByCurrentUser ?
-                                        <Icon type="heart" style={{cursor: 'pointer', color: 'darkRed'}}
-                                              onClick={this.handleHeartClick.bind(this, newsItem, this.props.newsType)}/>
-                                        :
-                                        <Icon type="heart" style={{cursor: 'pointer'}}
-                                              onClick={this.handleHeartClick.bind(this, newsItem, this.props.newsType)}/>
-                                }
+            news.map((newsItem, index) => {
+                    return (
+                        <Card.Grid class='cardGrid' key={index}>
+                            <div className="custom-image">
+                                <img alt="example" width="100%" height='200px' src={newsItem.urlToImage}/>
                             </div>
-                        </div>
-                    </Card.Grid>
-                )
+                            <div className="custom-card">
+                                <h4>{newsItem.title}</h4>
+                                <p style={{fontSize: '12px'}}>{newsItem.description}</p>
+                                <p style={{fontSize: '12px', color: 'black'}}>{
+                                    new Date(newsItem.publishedAt).getFullYear() + '-' +
+                                    (new Date(newsItem.publishedAt).getMonth() + 1) + '-' +
+                                    new Date(newsItem.publishedAt).getDate()
+                                }</p>
+                                <a href={newsItem.url} target='_blank'>more information</a>
+                                <div>
+                                    {
+                                        newsItem.isLikedByCurrentUser ?
+                                            <Icon type="heart" style={{cursor: 'pointer', color: 'darkRed'}}
+                                                  onClick={this.handleHeartClick.bind(this, newsItem, this.props.newsType)}/>
+                                            :
+                                            <Icon type="heart" style={{cursor: 'pointer'}}
+                                                  onClick={this.handleHeartClick.bind(this, newsItem, this.props.newsType)}/>
+                                    }
+                                </div>
+                            </div>
+                        </Card.Grid>
+                    )
+                }
             ) :
             <div>{this.state.stateText}</div>
 
