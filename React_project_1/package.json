@@ -25,6 +25,7 @@
     "rc-form": "^1.5.0",
     "react": "^16.0.0",
     "react-dom": "^16.0.0",
+    "react-highlightable": "0.0.2",
     "react-responsive": "^3.0.0",
     "react-router": "^4.2.0",
     "react-router-dom": "^4.2.2",

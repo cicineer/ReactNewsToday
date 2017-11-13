@@ -17,6 +17,10 @@ const getNews = function (source, res, callback) {
 }
 
 exports.news = {
+    getNewsInDbRegardingType: function (req, res, db) {
+        const newsType = req.params.newsType
+        db.find('news', {type: newsType}, (err, result) => res.send(result))
+    },
     natureAndSociety: function (req, res, db) {
         let news = []
         getNews(newsSource.natureAndSociety.cnn, res, (result) => {
@@ -33,7 +37,7 @@ exports.news = {
                         }, function (err, result) {
                             news.map((itemFromInternet) => {
                                 result.map((itemFromDb) => {
-                                    if(itemFromInternet.title === itemFromDb.title)
+                                    if (itemFromInternet.title === itemFromDb.title)
                                         itemFromInternet.isLikedByCurrentUser = true
                                 })
                             })

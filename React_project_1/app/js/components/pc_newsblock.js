@@ -13,10 +13,54 @@ export default class PCNewsBlock extends React.Component {
         }
     }
 
-    handleLogoutAction () {
+    componentWillMount() {
+        const self = this
+        const newsType = this.props.newsType
+
+        // const news = this.props.news || []
+        axios.get('http://127.0.0.1:3000/news/' + newsType, {
+            withCredentials: true
+        })
+            .then(function (response) {
+                if (response.data.status === -1) {
+                    // react set timeout 要把它绑在this上面
+                    setTimeout(function () {
+                        {
+                            self.setState({
+                                stateText: response.data.msg
+                            })
+                        }
+                    }.bind(self), 3000)
+                } else {
+                    const news = response.data
+                    axios.get('http://127.0.0.1:3000/news/getNewsFromDb/' + newsType, {
+                        withCredentials: true,
+                    }).then(function (response) {
+                        const newsFromDb = response.data
+                        news.map((item1) => {
+                            newsFromDb.map((item2) => {
+                                if (item1.title === item2.title)
+                                    item1.isLikedByCurrentUser = true
+                            })
+                        })
+                        self.setState({
+                            news: news
+                        })
+                    })
+                        .catch(function (err) {
+                            console.log(err)
+                        })
+                }
+            })
+            .catch(function (err) {
+                console.log(err)
+            })
+    }
+
+    handleLogoutAction() {
         let currentNews = this.state.news
         currentNews.map((item) => {
-            if(item.isLikedByCurrentUser === true) {
+            if (item.isLikedByCurrentUser === true) {
                 delete item.isLikedByCurrentUser
             }
         })
@@ -41,11 +85,8 @@ export default class PCNewsBlock extends React.Component {
         }
     }
 
-    componentWillMount() {
+    getRefreshedNews(newsType) {
         const self = this
-        const newsType = this.props.newsType
-
-        // const news = this.props.news || []
         axios.get('http://127.0.0.1:3000/news/' + newsType, {
             withCredentials: true
         })
@@ -61,9 +102,36 @@ export default class PCNewsBlock extends React.Component {
                     }.bind(self), 3000)
                 } else {
                     const news = response.data
-                    self.setState({
-                        news: news
-                    })
+                    const currentNews = self.state.news
+                    // If the current news' length is not equal to the upcoming news, the news must be changed
+                    if (news.length !== currentNews.length) {
+                        self.setState({
+                            news: news
+                        }, function () {
+                            console.log('news is updated')
+                        })
+                        notification.success({message: 'News is updated'})
+                    }
+                    // If the length is the same, then has to for loop both collections, if there is any one news which
+                    // is not the same as the current one, then Performing update
+                    else {
+                        for (let i = 0; i < news.length; i++) {
+                            for (let j = 0; j < currentNews.length; j++) {
+                                if (news[i].title !== currentNews[j].title) {
+                                    self.setState({
+                                        news: news
+                                    }, function () {
+                                        console.log('news is updated')
+                                    })
+                                    notification.success({message: 'News is updated'})
+                                } else {
+                                    notification.info({message: 'No fresh news'})
+                                }
+                                break
+                            }
+                            break
+                        }
+                    }
                 }
             })
             .catch(function (err) {

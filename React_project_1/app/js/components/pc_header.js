@@ -27,6 +27,7 @@ class PCHeader extends React.Component {
             news: []
         }
         this.handleLoginModal = this.handleLoginModal.bind(this)
+        this.handleRefresh = this.handleRefresh.bind(this)
     }
 
     componentWillMount() {
@@ -97,6 +98,10 @@ class PCHeader extends React.Component {
             })
     }
 
+    handleRefresh() {
+        this.refs.PcNewsBlock.getRefreshedNews(this.state.current)
+    }
+
     callback(e) {
         this.setState({
             current: e
@@ -145,28 +150,38 @@ class PCHeader extends React.Component {
                 <Row>
                     <Col span={20} offset={2}>
                         <Tabs defaultActiveKey="natureAndSociety" onChange={this.callback.bind(this)}>
-                            <TabPane tab="Society" key="natureAndSociety">
+                            <TabPane tab={<span>Society  <Icon type="reload" onClick={this.handleRefresh}
+                                                               style={{color: '#2db7f5', fontSize: '15px'}}/></span>} key="natureAndSociety">
                                 <PCNewsBlock newsType={this.state.current}
-                                                 newsFromDbAfterLogin={this.state.newsFromDbAfterLogin}
-                                                 handleLogout={this.handleLogoutButton}
-                                                ref='PcNewsBlock'/>
-                            </TabPane>
-                            <TabPane tab="Technology" key="technology">
-                                <PCNewsBlock newsType={this.state.current}
-                                                 newsFromDbAfterLogin={this.state.newsFromDbAfterLogin}
-                                                 handleLogout={this.handleLogoutButton}
+                                             newsFromDbAfterLogin={this.state.newsFromDbAfterLogin}
+                                             handleLogout={this.handleLogoutButton}
                                              ref='PcNewsBlock'/>
                             </TabPane>
-                            <TabPane tab="Sport" key="sport">
+
+                            <TabPane tab={<span>Technology  <Icon type="reload" onClick={this.handleRefresh}
+                                                                  style={{color: '#2db7f5', fontSize: '15px'}}/></span>} key="technology">
                                 <PCNewsBlock newsType={this.state.current}
-                                                 newsFromDbAfterLogin={this.state.newsFromDbAfterLogin}
-                                                 handleLogout={this.handleLogoutButton}
+                                             newsFromDbAfterLogin={this.state.newsFromDbAfterLogin}
+                                             handleLogout={this.handleLogoutButton}
                                              ref='PcNewsBlock'/>
                             </TabPane>
-                            <TabPane tab="Entertainment" key="entertainment">
+
+                            <TabPane tab={<span>Sport  <Icon type="reload" onClick={this.handleRefresh}
+                                                             style={{color: '#2db7f5', fontSize: '15px'}}/></span>} key="sport">
                                 <PCNewsBlock newsType={this.state.current}
-                                                 newsFromDbAfterLogin={this.state.newsFromDbAfterLogin}
-                                                 handleLogout={this.handleLogoutButton}
+                                             newsFromDbAfterLogin={this.state.newsFromDbAfterLogin}
+                                             handleLogout={this.handleLogoutButton}
+                                             ref='PcNewsBlock'/>
+                            </TabPane>
+
+                            <TabPane tab={<span>Entertainment  <Icon type="reload" onClick={this.handleRefresh}
+                                                                     style={{
+                                                                         color: '#2db7f5',
+                                                                         fontSize: '15px'
+                                                                     }}/></span>} key="entertainment">
+                                <PCNewsBlock newsType={this.state.current}
+                                             newsFromDbAfterLogin={this.state.newsFromDbAfterLogin}
+                                             handleLogout={this.handleLogoutButton}
                                              ref='PcNewsBlock'/>
                             </TabPane>
                         </Tabs>

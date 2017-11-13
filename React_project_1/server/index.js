@@ -44,6 +44,8 @@ app.post('/login', (req, res) => userRoutes.login(req, res, db, md5))
 
 app.post('/logout', (req, res) => userRoutes.logout(req, res, mongoStoreInstance))
 
+app.get('/news/getNewsFromDb/:newsType', (req, res) => newsRoutes.news.getNewsInDbRegardingType(req, res, db))
+
 app.get('/news/natureAndSociety', (req, res) => newsRoutes.news.natureAndSociety(req, res, db))
 
 app.get('/news/technology', (req, res) => newsRoutes.news.technology(req, res, db))
